@@ -1,4 +1,5 @@
 #include <torch/csrc/distributed/rpc/testing/faulty_process_group_agent.h>
+#include <torch/csrc/distributed/rpc/utils.h>
 
 namespace torch {
 namespace distributed {
@@ -80,7 +81,9 @@ std::shared_ptr<FutureMessage> FaultyProcessGroupAgent::send(
     failMessageCountMap_[key]++;
     lock.unlock();
     auto fm = std::make_shared<FutureMessage>();
-    fm->setError(c10::str("Send attempt failed intentionally for ", key));
+    fm->setError(makeRPCError(
+        c10::str("Send attempt failed intentionally for ", key),
+        RPCErrorType::INTENTIONAL_FAILURE));
     return fm;
   } else {
     lock.unlock();
@@ -120,9 +123,11 @@ MessageType FaultyProcessGroupAgent::messageStringToType(
       {"CLEANUP_AUTOGRAD_CONTEXT_REQ",
        MessageType::CLEANUP_AUTOGRAD_CONTEXT_REQ},
       {"PYTHON_REMOTE_CALL", MessageType::PYTHON_REMOTE_CALL},
+      {"SCRIPT_REMOTE_CALL", MessageType::SCRIPT_REMOTE_CALL},
       {"PYTHON_CALL", MessageType::PYTHON_CALL},
       {"SCRIPT_CALL", MessageType::SCRIPT_CALL},
-  };
+      {"PYTHON_RREF_FETCH_CALL", MessageType::PYTHON_RREF_FETCH_CALL},
+      {"SCRIPT_RREF_FETCH_CALL", MessageType::SCRIPT_RREF_FETCH_CALL}};
   const auto& it = msgMap.find(messageString);
   TORCH_CHECK(
       it != msgMap.end(),

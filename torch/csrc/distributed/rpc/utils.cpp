@@ -9,6 +9,7 @@
 #include <torch/csrc/distributed/rpc/python_call.h>
 #include <torch/csrc/distributed/rpc/python_remote_call.h>
 #include <torch/csrc/distributed/rpc/python_resp.h>
+#include <torch/csrc/distributed/rpc/rpc_agent.h>
 #include <torch/csrc/distributed/rpc/rref_proto.h>
 #include <torch/csrc/distributed/rpc/script_call.h>
 #include <torch/csrc/distributed/rpc/script_remote_call.h>
@@ -16,9 +17,39 @@
 #include <torch/csrc/jit/serialization/pickler.h>
 #include <torch/csrc/jit/serialization/unpickler.h>
 
+#include <fmt/format.h>
+
 namespace torch {
 namespace distributed {
 namespace rpc {
+
+RPCErrorType getRPCErrorType(const FutureMessage& fm) {
+  TORCH_INTERNAL_ASSERT(
+      fm.hasError(),
+      "FutureMessage passed to getRPCErrorType does not have an error.");
+
+  // Attempt to parse for error string given by makeRPCError, otherwise return
+  // unknown error.
+  auto err = std::string(fm.error()->what());
+  size_t pos = err.find(torch::distributed::rpc::kRPCErrorPrefix);
+  if (pos != std::string::npos) {
+    // Parse the RPCErrorType.
+    auto errIdx = pos + torch::distributed::rpc::kRPCErrorPrefix.size() + 1;
+    auto errStr = err.substr(errIdx, err.find(":", errIdx) - errIdx);
+    auto errType = static_cast<RPCErrorType>(std::stoi(errStr));
+    return errType;
+  } else {
+    return RPCErrorType::UNKNOWN_ERROR;
+  }
+}
+
+std::string makeRPCError(std::string rpcErrorStr, RPCErrorType errorType) {
+  return fmt::format(
+      "{}:{}:{}",
+      torch::distributed::rpc::kRPCErrorPrefix,
+      errorType,
+      rpcErrorStr);
+}
 
 std::unique_ptr<RpcCommandBase> deserializeRequest(const Message& request) {
   switch (request.type()) {

@@ -11,6 +11,7 @@ constexpr size_t WorkerInfo::MAX_NAME_LEN;
 // std::chrono::time_point<std::chrono::steady_clock>::max() due to a known
 // overflow-related bug.
 constexpr auto kLargeTimeDuration = std::chrono::hours(10000);
+const std::string kRPCErrorPrefix = std::string("RPCErr");
 
 RpcAgent::RpcAgent(
     WorkerInfo workerId,

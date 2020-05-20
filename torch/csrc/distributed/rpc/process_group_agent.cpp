@@ -10,6 +10,8 @@
 namespace torch {
 namespace distributed {
 namespace rpc {
+const std::string kRPCTimeoutErrorStr =
+    "RPC ran for more than {} milliseconds and timed out.";
 
 namespace {
 constexpr auto kSecToMsConversion = 1000;
@@ -795,13 +797,13 @@ void ProcessGroupAgent::pollTimedOutRPCs() {
     futureCV_.notify_all();
 
     for (const auto& timedOutFuture : timedOutFutures) {
-      auto err = c10::str(
-          "RPC ran for more than ",
-          timedOutFuture.timeout_.count(),
-          " milliseconds and timed out.");
+      auto err = makeRPCError(
+          fmt::format(kRPCTimeoutErrorStr, timedOutFuture.timeout_.count()),
+          RPCErrorType::TIMEOUT);
+
       if (!timedOutFuture.future_->hasError()) {
         --clientActiveCalls_;
-        timedOutFuture.future_->setError(err);
+        timedOutFuture.future_->setError(std::move(err));
         // The future timed out and will not be processed by handleRecv(), even
         // if we eventually get a response. In order to keep track of all
         // send/recv pairs, we increment the count here.
