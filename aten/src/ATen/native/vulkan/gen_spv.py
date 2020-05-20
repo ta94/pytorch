@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import argparse
 import os
@@ -104,14 +105,17 @@ if __name__ == '__main__':
   parser.add_argument(
       '-c',
       '--glslc-path',
+      required=True,
       help='')
   parser.add_argument(
       '-t',
       '--tmp-spv-path',
+      required=True,
       help='/tmp')
   parser.add_argument(
       '-o',
       '--output-path',
+      required=True,
       help='')
   options = parser.parse_args()
 
@@ -119,14 +123,6 @@ if __name__ == '__main__':
   GLSLC_PATH = options.glslc_path
   TMP_DIR_PATH = options.tmp_spv_path
   OUTPUT_DIR_PATH = options.output_path
-  if GLSL_DIR_PATH is None: 
-      raise Exception("")
-
-  if GLSLC_PATH is None: 
-      raise Exception("")
-
-  if OUTPUT_DIR_PATH is None: 
-      raise Exception("")
 
   if not os.path.exists(OUTPUT_DIR_PATH):
     os.makedirs(OUTPUT_DIR_PATH)

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import sys
 import os
@@ -59,20 +61,17 @@ if __name__ == '__main__':
       '-i',
       '--glsl-path',
       help='path to directory with glsl to process',
+      required=True,
       default='.')
   parser.add_argument(
       '-o',
       '--output-path',
-      help='path to directory to generate glsl.h glsl.cpp (cpp namespace at::native::vulkan)')
+      help='path to directory to generate glsl.h glsl.cpp (cpp namespace at::native::vulkan)'
+      required=True)
   options = parser.parse_args()
 
   GLSL_DIR_PATH = options.glsl_path
   OUTPUT_DIR_PATH = options.output_path
-  if GLSL_DIR_PATH is None: 
-      raise Exception("--glsl-path was not specifie")
-
-  if OUTPUT_DIR_PATH is None: 
-      raise Exception("--output-path was not specifie")
 
   if not os.path.exists(OUTPUT_DIR_PATH):
     os.makedirs(OUTPUT_DIR_PATH)

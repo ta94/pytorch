@@ -561,7 +561,7 @@ if(USE_VULKAN)
   else()
     # USE_VULKAN AND NOT ANDROID
     if(NOT DEFINED ENV{VULKAN_SDK})
-      message(FATAL_ERROR "USE_VULKAN requires environment var  VULKAN_SDK set")
+      message(FATAL_ERROR "USE_VULKAN requires environment var VULKAN_SDK set")
     endif()
     message(STATUS "VULKAN_SDK:$ENV{VULKAN_SDK}")
 
