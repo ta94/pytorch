@@ -44,7 +44,7 @@ const VContext& context();
 // in host visible memory that can be memory mapped to CPU memory.
 //
 // 1. VImage(TexC4) - (wrapper on vulkan VkImage), optional representation of
-// tensors with dimension <= 4 as VkImage, sed in shaders as texture or storage
+// tensors with dimension <= 4 as VkImage, used in shaders as texture or storage
 // image. It is 3-dimensional image (x, y, z) with 4 component * 16 bit for each
 // triple (x, y, z).
 // For NCHW, NHWC:
@@ -171,7 +171,7 @@ class VContext final {
   uint32_t queueFamilyIndex_;
   bool enableValidationLayers_;
   VkCommandPool commandPool_;
-}; // class VContext
+};
 
 class VBuffer final {
  public:
@@ -247,6 +247,7 @@ class VBuffer final {
   inline VkDeviceSize sizeBytes() const {
     return bufferSizeBytes_;
   }
+
   void addBufferMemoryBarrier(
       VkCommandBuffer commandBuffer,
       VkDeviceSize offset,
@@ -257,7 +258,7 @@ class VBuffer final {
   VkDescriptorType descriptorType_;
   VkBuffer buffer_;
   VkDeviceMemory bufferMemory_;
-}; // class VBuffer
+};
 
 VBuffer makeUniformConstBuffer(void* ptr, VkDeviceSize size);
 
@@ -331,7 +332,7 @@ class VImage final {
   VkImageView imageView_;
   VkSampler sampler_;
   mutable VkImageLayout imageLayout_;
-}; // class VImage
+};
 
 void copy_buffer_to_image(const VBuffer& buffer, VImage& image);
 
@@ -394,9 +395,12 @@ class ComputeUnit final {
       const unsigned int spvCodeSize,
       const VkDescriptorSetLayout& descrSetLayout,
       WorkGroupSize& workGroupSize) {
-    const uint32_t* code = reinterpret_cast<const uint32_t*>(spvCode);
     const auto codeSize = spvCodeSize;
-    createComputePipeline(code, codeSize, descrSetLayout, workGroupSize);
+    createComputePipeline(
+        reinterpret_cast<const uint32_t*>(spvCode),
+        codeSize,
+        descrSetLayout,
+        workGroupSize);
   }
 #endif
 
@@ -445,7 +449,7 @@ class ComputeUnit final {
   VkPipeline pipeline_;
   VkPipelineLayout pipelineLayout_;
   VkShaderModule computeShaderModule_;
-}; // class ComputeUnit
+};
 
 std::ostream& operator<<(std::ostream& s, const WorkGroupSize& workGroupSize);
 std::ostream& operator<<(std::ostream& s, const ImageSize& imageSize);

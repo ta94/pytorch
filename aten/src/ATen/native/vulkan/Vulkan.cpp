@@ -87,7 +87,7 @@ void VContext::createInstance() {
     vkEnumerateInstanceLayerProperties(&layerPresentCount, nullptr);
     std::vector<VkLayerProperties> layerProps(layerPresentCount);
     vkEnumerateInstanceLayerProperties(&layerPresentCount, layerProps.data());
-    const char* instanceLayers[] = {
+    std::array<const char*, 6> instanceLayers{
         "VK_LAYER_GOOGLE_unique_objects",
         "VK_LAYER_GOOGLE_threading",
         "VK_LAYER_LUNARG_object_tracker",
@@ -96,17 +96,13 @@ void VContext::createInstance() {
         "VK_LAYER_KHRONOS_validation",
     };
 
-    uint32_t instanceLayersRequestCount =
-        sizeof(instanceLayers) / sizeof(instanceLayers[0]);
-    for (uint32_t i = 0; i < instanceLayersRequestCount; i++) {
+    for (const auto& wantedLayer : instanceLayers) {
       bool found = false;
-      for (uint32_t j = 0; j < layerPresentCount; j++) {
-        if (strcmp(instanceLayers[i], layerProps[j].layerName) == 0) {
-          found = true;
+      for (const auto& presentLayer : layerProps) {
+        if (strcmp(wantedLayer, presentLayer.layerName) == 0) {
+          enabledValidationLayers_.push_back(wantedLayer);
+          break;
         }
-      }
-      if (found) {
-        enabledValidationLayers_.push_back(instanceLayers[i]);
       }
     }
 
@@ -128,9 +124,9 @@ void VContext::createInstance() {
 
   VkApplicationInfo applicationInfo{};
   applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  applicationInfo.pApplicationName = "pytorch";
+  applicationInfo.pApplicationName = "PyTorch";
   applicationInfo.applicationVersion = 0;
-  applicationInfo.pEngineName = "compute";
+  applicationInfo.pEngineName = "PyTorch";
   applicationInfo.engineVersion = 0;
   applicationInfo.apiVersion = VK_API_VERSION_1_0;
 
@@ -175,15 +171,7 @@ void VContext::findPhysicalDevice() {
       deviceCount > 0, "Vulkan: Could not find a device with vulkan support");
   std::vector<VkPhysicalDevice> devices(deviceCount);
   vkEnumeratePhysicalDevices(instance_, &deviceCount, devices.data());
-  int i = 0;
-  bool found = false;
-  for (VkPhysicalDevice device : devices) {
-    if (!found) {
-      physicalDevice_ = device;
-      found = true;
-    }
-    i++;
-  }
+  physicalDevice_ = devices[0];
 }
 
 uint32_t VContext::getComputeQueueFamilyIndex() {
@@ -196,21 +184,15 @@ uint32_t VContext::getComputeQueueFamilyIndex() {
   vkGetPhysicalDeviceQueueFamilyProperties(
       physicalDevice_, &queueFamilyCount, queueFamilies.data());
 
-  uint32_t i = 0;
-
-  bool queueFound = false;
-  for (; i < queueFamilies.size(); ++i) {
+  for (uint32_t i = 0; i < queueFamilies.size(); ++i) {
     VkQueueFamilyProperties props = queueFamilies[i];
     if (props.queueCount > 0 && (props.queueFlags & VK_QUEUE_COMPUTE_BIT)) {
-      queueFound = true;
-      break;
+      return i;
     }
   }
 
   TORCH_CHECK(
-      queueFound,
-      "Vulkan: Could not find a queue family that supports operations");
-  return i;
+      false, "Vulkan: Could not find a queue family that supports operations");
 }
 
 void VContext::createDevice() {
@@ -251,7 +233,8 @@ void VContext::createDevice() {
 
 static std::unique_ptr<VContext> gContext;
 const VContext& context() {
-  return *(gContext.get());
+  TORCH_INTERNAL_ASSERT_DEBUG_ONLY(gContext);
+  return *gContext;
 }
 
 bool initVulkanContextOnce() {
@@ -286,8 +269,9 @@ uint32_t findMemoryType(
   for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i) {
     if ((memoryTypeBits & (1 << i)) &&
         ((memoryProperties.memoryTypes[i].propertyFlags & properties) ==
-         properties))
+         properties)) {
       return i;
+    }
   }
   return -1;
 }
