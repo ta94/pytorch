@@ -19,9 +19,9 @@ def genCppH(hFilePath, cppFilePath, srcDirPath, glslcPath, tmpDirPath):
     vexs = os.popen(cmd).read().split('\n')
     srcPaths = []
     for f in vexs:
-      if len(f) > 1:
-        srcPaths.append(f)
-        srcPaths.sort()
+        if len(f) > 1:
+            srcPaths.append(f)
+            srcPaths.sort()
     print("srcPaths:{}".format(srcPaths))
 
     spvPaths = []
@@ -30,10 +30,10 @@ def genCppH(hFilePath, cppFilePath, srcDirPath, glslcPath, tmpDirPath):
         name = getName(srcPath).replace("_glsl", "")
         print("name {}".format(name))
 
-        spvPath = tmpDirPath + "/" + name + ".spv";
+        spvPath = tmpDirPath + "/" + name + ".spv"
         print("spvPath {}".format(spvPath))
 
-        cmd = [glslcPath, "-fshader-stage=compute", srcPath, "-o", spvPath, "--target-env=vulkan1.0"];
+        cmd = [glslcPath, "-fshader-stage=compute", srcPath, "-o", spvPath, "--target-env=vulkan1.0"]
         print("\nglslc cmd:", cmd)
 
         subprocess.check_call(cmd)
@@ -75,46 +75,46 @@ def genCppH(hFilePath, cppFilePath, srcDirPath, glslcPath, tmpDirPath):
     h += nsend
 
     with open(hFilePath, "w") as f:
-      f.write(h)
+        f.write(h)
     with open(cppFilePath, "w") as f:
-      f.write(cpp)
+        f.write(cpp)
 
 def main(argv):
-  parser = argparse.ArgumentParser(description='')
-  parser.add_argument(
-      '-i',
-      '--glsl-path',
-      help='',
-      default='.')
-  parser.add_argument(
-      '-c',
-      '--glslc-path',
-      required=True,
-      help='')
-  parser.add_argument(
-      '-t',
-      '--tmp-spv-path',
-      required=True,
-      help='/tmp')
-  parser.add_argument(
-      '-o',
-      '--output-path',
-      required=True,
-      help='')
-  options = parser.parse_args()
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument(
+        '-i',
+        '--glsl-path',
+        help='',
+        default='.')
+    parser.add_argument(
+        '-c',
+        '--glslc-path',
+        required=True,
+        help='')
+    parser.add_argument(
+        '-t',
+        '--tmp-spv-path',
+        required=True,
+        help='/tmp')
+    parser.add_argument(
+        '-o',
+        '--output-path',
+        required=True,
+        help='')
+    options = parser.parse_args()
 
-  if not os.path.exists(options.output_path):
-    os.makedirs(options.output_path)
+    if not os.path.exists(options.output_path):
+        os.makedirs(options.output_path)
 
-  if not os.path.exists(options.tmp_spv_path):
-    os.makedirs(options.tmp_spv_path)
+    if not os.path.exists(options.tmp_spv_path):
+        os.makedirs(options.tmp_spv_path)
 
-  genCppH(
-      hFilePath=options.output_path + "/spv.h",
-      cppFilePath=options.output_path + "/spv.cpp",
-      srcDirPath=options.glsl_path,
-      glslcPath=options.glslc_path,
-      tmpDirPath=options.tmp_spv_path)
+    genCppH(
+        hFilePath=options.output_path + "/spv.h",
+        cppFilePath=options.output_path + "/spv.cpp",
+        srcDirPath=options.glsl_path,
+        glslcPath=options.glslc_path,
+        tmpDirPath=options.tmp_spv_path)
 
 if __name__ == '__main__':
-  sys.exit(main(sys.argv))
+    sys.exit(main(sys.argv))
