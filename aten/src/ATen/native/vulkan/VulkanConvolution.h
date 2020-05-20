@@ -7,7 +7,7 @@
 namespace at {
 namespace native {
 namespace vulkan {
-namespace details {
+namespace detail {
 namespace convolution2d {
 
 c10::intrusive_ptr<vulkan::Conv2dOpContext> createConv2dClampPrePackOpContext(
@@ -40,7 +40,7 @@ ContextConv2D create(
 Tensor run(const ContextConv2D& context, const Tensor& input);
 
 } // namespace convolution2d
-} // namespace details
+} // namespace detail
 } // namespace vulkan
 } // namespace native
 } // namespace at

@@ -8,7 +8,7 @@ namespace at {
 namespace native {
 namespace vulkan {
 
-using details::convolution2d::createConv2dClampPrePackOpContext;
+using detail::convolution2d::createConv2dClampPrePackOpContext;
 
 namespace {
 torch::jit::class_<Conv2dOpContext> register_packed_conv2d_op_context_class() {
@@ -53,7 +53,7 @@ static auto registry =
             "__torch__.torch.classes.vulkan.Conv2dOpContext W_prepack) -> Tensor Y",
             torch::RegisterOperators::options()
                 .aliasAnalysis(at::AliasAnalysisKind::PURE_FUNCTION)
-                .kernel<details::convolution2d::Conv2dClampRun>(
+                .kernel<detail::convolution2d::Conv2dClampRun>(
                     DispatchKey::Vulkan));
 } // namespace
 

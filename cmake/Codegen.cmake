@@ -146,8 +146,7 @@ if(INTERN_BUILD_ATEN_OPS)
 
   set(CUSTOM_BUILD_FLAGS)
   if(INTERN_BUILD_MOBILE)
-    if(USE_VULKAN OR USE_GLES)
-      message(STATUS "XXX VULKAN")
+    if(USE_VULKAN)
       list(APPEND CUSTOM_BUILD_FLAGS --backend_whitelist CPU QuantizedCPU Vulkan)
     else()
       list(APPEND CUSTOM_BUILD_FLAGS --backend_whitelist CPU QuantizedCPU)
@@ -171,7 +170,7 @@ if(INTERN_BUILD_ATEN_OPS)
       --force_schema_registration
       --op_registration_whitelist ${OP_REGISTRATION_WHITELIST})
   endif()
-  if(USE_VULKAN OR USE_GLES)
+  if(USE_VULKAN)
     set(GEN_VULKAN_FLAGS --vulkan)
   endif()
 

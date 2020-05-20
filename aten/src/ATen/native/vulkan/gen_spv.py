@@ -14,7 +14,7 @@ def genCppH(hFilePath, cppFilePath, srcDirPath, glslcPath, tmpDirPath):
     print("hFilePath:{} cppFilePath:{} srcDirPath:{} glslcPath:{} tmpDirPath:{}".format(
         hFilePath, cppFilePath, srcDirPath, glslcPath, tmpDirPath))
 
-    cmd = "find " + srcDirPath + " -name \"vulkan*.glsl\""
+    cmd = "find " + srcDirPath + " -name \"*.glsl\""
     vexs = os.popen(cmd).read().split('\n')
     srcPaths = []
     for f in vexs:

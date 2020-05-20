@@ -4,8 +4,7 @@
 namespace at {
 namespace native {
 namespace vulkan {
-namespace details {
-namespace vulkan {
+namespace detail {
 
 void upsample_nearest2d(
     VulkanTensor& output,
@@ -70,8 +69,7 @@ void addmm(
 
 void mean(VulkanTensor& output, const VulkanTensor& input);
 
-} // namespace vulkan
-} // namespace details
+} // namespace detail
 } // namespace vulkan
 } // namespace native
 } // namespace at

@@ -14,7 +14,7 @@ c10::intrusive_ptr<Conv2dOpContext> VulkanConv2dOpContext::create_context(
     int64_t groups,
     const c10::optional<Scalar> output_min,
     const c10::optional<Scalar> output_max) {
-  auto op_context = vulkan::details::convolution2d::create(
+  auto op_context = vulkan::detail::convolution2d::create(
       weight,
       bias,
       padding,
@@ -37,7 +37,7 @@ c10::intrusive_ptr<Conv2dOpContext> VulkanConv2dOpContext::create_context(
 }
 
 Tensor VulkanConv2dOpContext::run(const Tensor& input) {
-  return vulkan::details::convolution2d::run(op_context_, input);
+  return vulkan::detail::convolution2d::run(op_context_, input);
 }
 
 } // namespace vulkan

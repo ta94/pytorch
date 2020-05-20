@@ -1,9 +1,9 @@
 # ---[ Generate and install header and cpp files
 include(../cmake/Codegen.cmake)
 
-# ---[ Vulkan and GLES code gen
-if(USE_VULKAN OR USE_GLES)
-  include(../cmake/VulkanGLESCodegen.cmake)
+# ---[ Vulkan code gen
+if(USE_VULKAN)
+  include(../cmake/VulkanCodegen.cmake)
 endif()
 
 # ---[ Declare source file lists

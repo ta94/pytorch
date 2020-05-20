@@ -1,4 +1,4 @@
-#if !defined(USE_VULKAN) && !defined(USE_GLES)
+#ifndef USE_VULKAN
 
 namespace at {
 namespace native {

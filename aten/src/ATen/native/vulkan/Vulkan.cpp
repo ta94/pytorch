@@ -17,7 +17,7 @@
 #include <ATen/native/vulkan/Vulkan.h>
 #include <ATen/native/vulkan/VulkanCommon.h>
 
-#ifdef USE_VULKAN_GLES_SHADERC_RUNTIME
+#ifdef USE_VULKAN_SHADERC_RUNTIME
 #include <ATen/native/vulkan/glsl.h>
 #include <shaderc/shaderc.hpp>
 #else
@@ -33,8 +33,7 @@
 namespace at {
 namespace native {
 namespace vulkan {
-namespace details {
-namespace vulkan {
+namespace detail {
 
 VContext::VContext(bool enableValidationLayers)
     : enableValidationLayers_(enableValidationLayers) {
@@ -779,7 +778,7 @@ void ComputeUnit::createComputePipeline(
       device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline_));
 }
 
-#ifdef USE_VULKAN_GLES_SHADERC_RUNTIME
+#ifdef USE_VULKAN_SHADERC_RUNTIME
 void ComputeUnit::createComputePipelineCompile(
     std::string glslSrc,
     const VkDescriptorSetLayout& descrSetLayout,
@@ -943,7 +942,7 @@ void copy_buffer_to_image(const VBuffer& buffer, VImage& image) {
   buffer.bind(descrSet, 1);
   constBuffer.bind(descrSet, 2);
   WorkGroupSize workGroupSize{8, 8, 1};
-  ComputeUnit computeUnit{at::native::vulkan::GLSL_SPV(vulkan_nchw_to_image),
+  ComputeUnit computeUnit{at::native::vulkan::GLSL_SPV(nchw_to_image),
                           descrSetLayout,
                           workGroupSize};
   computeUnit.createCommandBuffer(descrSet);
@@ -1006,7 +1005,7 @@ void copy_image_to_buffer(
   constBuffer.bind(descrSet, 2);
 
   WorkGroupSize workGroupSize{8, 8, 1};
-  ComputeUnit computeUnit{at::native::vulkan::GLSL_SPV(vulkan_image_to_nchw),
+  ComputeUnit computeUnit{at::native::vulkan::GLSL_SPV(image_to_nchw),
                           descrSetLayout,
                           workGroupSize};
 
@@ -1249,8 +1248,7 @@ std::ostream& operator<<(std::ostream& s, const WorkGroupSize& workGroupSize) {
   return s;
 }
 
-} // namespace vulkan
-} // namespace details
+} // namespace detail
 } // namespace vulkan
 } // namespace native
 } // namespace at

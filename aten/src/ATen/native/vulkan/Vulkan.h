@@ -12,7 +12,7 @@
 #include <vulkan/vulkan.h>
 #endif
 
-#ifdef USE_VULKAN_GLES_SHADERC_RUNTIME
+#ifdef USE_VULKAN_SHADERC_RUNTIME
 #include <ATen/native/vulkan/glsl.h>
 #define GLSL_SPV(name) name##_glsl
 #else
@@ -23,8 +23,7 @@
 namespace at {
 namespace native {
 namespace vulkan {
-namespace details {
-namespace vulkan {
+namespace detail {
 
 static constexpr bool kEnableValidationLayers = true;
 bool is_available();
@@ -379,7 +378,7 @@ struct WorkGroupSize {
 
 class ComputeUnit final {
  public:
-#ifdef USE_VULKAN_GLES_SHADERC_RUNTIME
+#ifdef USE_VULKAN_SHADERC_RUNTIME
   ComputeUnit(
       const char* glslSrc,
       const VkDescriptorSetLayout& descrSetLayout,
@@ -413,7 +412,7 @@ class ComputeUnit final {
       const VkDescriptorSetLayout& descrSetLayout,
       WorkGroupSize& workGroupSize);
 
-#ifdef USE_VULKAN_GLES_SHADERC_RUNTIME
+#ifdef USE_VULKAN_SHADERC_RUNTIME
   void createComputePipelineCompile(
       std::string glslSrc,
       const VkDescriptorSetLayout& descrSetLayout,
@@ -452,8 +451,7 @@ std::ostream& operator<<(std::ostream& s, const WorkGroupSize& workGroupSize);
 std::ostream& operator<<(std::ostream& s, const ImageSize& imageSize);
 std::ostream& operator<<(std::ostream& s, const ImageSizes& imageSizes);
 
-} // namespace vulkan
-} // namespace details
+} // namespace detail
 } // namespace vulkan
 } // namespace native
 } // namespace at

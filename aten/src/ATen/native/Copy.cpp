@@ -10,7 +10,7 @@
 #include <ATen/NamedTensorUtils.h>
 #include <torch/library.h>
 
-#if defined(USE_VULKAN) || defined(USE_GLES)
+#ifdef USE_VULKAN
 #include <ATen/native/vulkan/VulkanAten.h>
 #endif
 namespace {
@@ -129,7 +129,7 @@ static Tensor & copy_impl(Tensor & self, const Tensor & src, bool non_blocking) 
     TORCH_CHECK(false, "Copying from quantized Tensor to non-quantized Tensor is not allowed, please use dequantize to get a float Tensor from a quantized Tensor");
   }
 
-#if defined(USE_VULKAN) || defined(USE_GLES)
+#ifdef USE_VULKAN
   if (self.device().type() == at::kVulkan || src.device().type() == at::kVulkan) {
     return vulkan_copy_(self, src);
   }

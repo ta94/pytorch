@@ -1,4 +1,4 @@
-#if defined(USE_VULKAN) || defined(USE_GLES)
+#ifdef USE_VULKAN
 #include <ATen/native/vulkan/VulkanAten.h>
 
 namespace at {

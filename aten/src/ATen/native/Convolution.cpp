@@ -12,7 +12,7 @@
 #if AT_NNPACK_ENABLED()
 #include <nnpack.h>
 #endif
-#if defined(USE_VULKAN) || defined(USE_GLES)
+#ifdef USE_VULKAN
 #include <ATen/native/vulkan/VulkanAten.h>
 #endif
 
@@ -280,7 +280,7 @@ auto ConvParams::use_xnnpack(
 
 auto ConvParams::use_vulkan(
         const at::Tensor &input, const at::Tensor& weight) const -> bool {
-#if defined(USE_VULKAN) || defined(USE_GLES)
+#ifdef USE_VULKAN
   if (!(input.is_vulkan() && input.scalar_type() == kFloat &&
         !transposed && input.ndimension() == 4)) {
     return false;
@@ -687,7 +687,7 @@ at::Tensor _convolution(
         output = at::miopen_depthwise_convolution(
             input.contiguous(), weight, bias,
             padding, stride, dilation, params.groups, params.benchmark, params.deterministic);
-#if defined(USE_VULKAN) || defined(USE_GLES)
+#ifdef USE_VULKAN
       } else if (params.use_vulkan(input, weight)) {
         output = at::native::vulkan_convolution(
             input, weight, bias,
@@ -785,7 +785,7 @@ at::Tensor _convolution(
           bias,
           params.stride,
           params.padding);
-#if defined(USE_VULKAN) || defined(USE_GLES)
+#ifdef USE_VULKAN
   } else if (params.use_vulkan(input, weight)) {
     output = at::native::vulkan_convolution(
         input, weight, bias,
