@@ -379,6 +379,7 @@ struct WorkGroupSize {
 
 class ComputeUnit final {
  public:
+  static constexpr uint64_t kFenceTimeoutNanos = 100000000000;
 #ifdef USE_VULKAN_SHADERC_RUNTIME
   ComputeUnit(
       const char* glslSrc,

@@ -88,9 +88,9 @@ at::Tensor& copy_to_vulkan_(at::Tensor& self, const at::Tensor& src) {
       src.scalar_type() == ScalarType::Float,
       "copy_to_vulkan is implemented only for float dtype");
 
-  auto cpu_tensor_cont = src.contiguous();
+  auto cpu_tensor_contiguous = src.contiguous();
   VulkanTensor& vtensor = vtensor_from_vulkan(self);
-  vtensor.set_data_from_host(cpu_tensor_cont.template data_ptr<float>());
+  vtensor.set_data_from_host(cpu_tensor_contiguous.template data_ptr<float>());
   return self;
 }
 
@@ -219,7 +219,7 @@ at::Tensor vulkan_convolution_prepacked(
   VulkanTensor voutput =
       VulkanTensor{{params.N, params.OC, params.OH, params.OW}};
   voutput.allocate_storage();
-  const bool hasBias = bias.has_value() && (*bias).defined();
+  const bool hasBias = bias.has_value() && bias->defined();
   const bool vulkanBias = (*bias).is_vulkan();
   if (hasBias && vulkanBias) {
     const VulkanTensor& vbias = vtensor_from_vulkan(*bias);

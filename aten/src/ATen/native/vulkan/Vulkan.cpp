@@ -66,17 +66,16 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugReportCallbackFn(
     const char* pMsg,
     void* pUserData) {
   std::stringstream s;
-  if (msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
-    s << "ERROR:";
-  } else if (msgFlags & VK_DEBUG_REPORT_WARNING_BIT_EXT) {
-    s << "WARN:";
-  } else if (msgFlags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
-    s << "PERF_WARNING:";
-  } else if (msgFlags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
-    s << "INFO:";
-  }
   s << pLayerPrefix << " " << msgCode << " " << pMsg << std::endl;
-  std::cout << s.str();
+  if (msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
+    LOG(ERROR) << s.str();
+  } else if (msgFlags & VK_DEBUG_REPORT_WARNING_BIT_EXT) {
+    LOG(WARNING) << "WARN:" << s.str();
+  } else if (msgFlags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
+    LOG(WARNING) << "PERF_WARN:" << s.str();
+  } else if (msgFlags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
+    LOG(INFO) << s.str();
+  }
   return VK_FALSE;
 }
 
@@ -596,8 +595,6 @@ void VImage::addImageMemoryBarrier(
     barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
     barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
   } else {
-    std::cout << "VImage Layout transition " << oldLayout << " -> " << newLayout
-              << std::endl;
     TORCH_INTERNAL_ASSERT(
         false, "Vulkan: Unsupported Vulkan Image Layout transition");
   }
@@ -881,7 +878,7 @@ void ComputeUnit::submitAndWaitCommandBuffer() {
   VK_CHECK(vkCreateFence(context().device(), &fenceCreateInfo, NULL, &fence))
 
   VK_CHECK(vkQueueSubmit(context().queue(), 1, &submitInfo, fence));
-  vkWaitForFences(context().device(), 1, &fence, VK_TRUE, 100000000000);
+  vkWaitForFences(context().device(), 1, &fence, VK_TRUE, kFenceTimeoutNanos);
 
   vkDestroyFence(context().device(), fence, NULL);
 }
