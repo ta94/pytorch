@@ -15,7 +15,9 @@
 #include <ATen/TypeDefault.h>
 #include <ATen/CPUType.h>
 #include <ATen/QuantizedCPUType.h>
+#ifdef USE_VULKAN
 #include <ATen/VulkanType.h>
+#endif
 #endif
 
 namespace at {
