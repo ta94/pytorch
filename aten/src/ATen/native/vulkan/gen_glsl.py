@@ -19,8 +19,7 @@ def findAllGlsls(path):
   return output
 
 def getName(filePath):
-    dirPath, fileName = filePath.rsplit('/', 1)
-    return fileName.replace("/", "_").replace(".", "_")
+    return os.path.basename(filePath).replace("/", "_").replace(".", "_")
 
 def genCppH(hFilePath, cppFilePath, glsls):
   print("hFilePath:{}".format(hFilePath))
@@ -55,7 +54,7 @@ def genCppH(hFilePath, cppFilePath, glsls):
   with open(cppFilePath, "w") as f:
     f.write(cpp)
 
-if __name__ == '__main__':
+def main(argv):
   parser = argparse.ArgumentParser(description='Generate glsl.cpp and glsl.h containing glsl sources')
   parser.add_argument(
       '-i',
@@ -70,11 +69,11 @@ if __name__ == '__main__':
       required=True)
   options = parser.parse_args()
 
-  GLSL_DIR_PATH = options.glsl_path
-  OUTPUT_DIR_PATH = options.output_path
+  if not os.path.exists(options.output_path):
+    os.makedirs(options.output_path)
 
-  if not os.path.exists(OUTPUT_DIR_PATH):
-    os.makedirs(OUTPUT_DIR_PATH)
+  glsls = findAllGlsls(options.glsl_path)
+  genCppH(options.output_path + "/" + H_NAME, options.output_path + "/" + CPP_NAME, glsls)
 
-  glsls = findAllGlsls(GLSL_DIR_PATH)
-  genCppH(OUTPUT_DIR_PATH + "/" + H_NAME, OUTPUT_DIR_PATH + "/" + CPP_NAME, glsls)
+if __name__ == '__main__':
+  sys.exit(main(sys.argv))

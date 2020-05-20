@@ -2,14 +2,14 @@
 
 import argparse
 import os
+import sys
 import subprocess
 
 H_NAME = "spv.h"
 CPP_NAME = "spv.cpp"
 
 def getName(filePath):
-    dirPath, fileName = filePath.rsplit('/', 1)
-    return fileName.replace("/", "_").replace(".", "_")
+    return os.path.basename(filePath).replace("/", "_").replace(".", "_")
 
 def genCppH(hFilePath, cppFilePath, srcDirPath, glslcPath, tmpDirPath):
     print("hFilePath:{} cppFilePath:{} srcDirPath:{} glslcPath:{} tmpDirPath:{}".format(
@@ -33,15 +33,10 @@ def genCppH(hFilePath, cppFilePath, srcDirPath, glslcPath, tmpDirPath):
         spvPath = tmpDirPath + "/" + name + ".spv";
         print("spvPath {}".format(spvPath))
 
-        cmd = "{} -fshader-stage=compute {} -o {} --target-env=vulkan1.0".format(
-            glslcPath, srcPath, spvPath)
-        print("\nglslc cmd: {}".format(cmd))
+        cmd = [glslcPath, "-fshader-stage=compute", srcPath, "-o", spvPath, "--target-env=vulkan1.0"];
+        print("\nglslc cmd:", cmd)
 
-        glslcProcess = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        glslcProcess.wait()
-        print("returncode:{}\n".format(glslcProcess.returncode))
-        if glslcProcess.returncode != 0:
-          raise Exception("Error compiling glsl " + srcPath)
+        subprocess.check_call(cmd)
         spvPaths.append(spvPath)
 
     print("hFilePath:{}".format(hFilePath))
@@ -65,25 +60,14 @@ def genCppH(hFilePath, cppFilePath, srcDirPath, glslcPath, tmpDirPath):
         sizeBytes = 0
         with open(spvPath, 'rb') as f:
             line = ""
-            n = 0
             while True:
                 byte = f.read(1)
                 if not byte:
                     break
                 int_value = ord(byte)
                 s = "0x{0:02X},".format(int_value)
-                if n==16:
-                    cpp += line + "\n"
-                    line = ""
-                    n = 0
-                line += s
-                n += 1
+                cpp += s + "\n"
                 sizeBytes += 1
-
-            if n > 0:
-                cpp += line + "\n"
-                line = ""
-                n = 0
             cpp += "};\n"
         cpp += "unsigned int {} = {};\n".format(name_len, sizeBytes)
 
@@ -95,7 +79,7 @@ def genCppH(hFilePath, cppFilePath, srcDirPath, glslcPath, tmpDirPath):
     with open(cppFilePath, "w") as f:
       f.write(cpp)
 
-if __name__ == '__main__':
+def main(argv):
   parser = argparse.ArgumentParser(description='')
   parser.add_argument(
       '-i',
@@ -119,20 +103,18 @@ if __name__ == '__main__':
       help='')
   options = parser.parse_args()
 
-  GLSL_DIR_PATH = options.glsl_path
-  GLSLC_PATH = options.glslc_path
-  TMP_DIR_PATH = options.tmp_spv_path
-  OUTPUT_DIR_PATH = options.output_path
+  if not os.path.exists(options.output_path):
+    os.makedirs(options.output_path)
 
-  if not os.path.exists(OUTPUT_DIR_PATH):
-    os.makedirs(OUTPUT_DIR_PATH)
-
-  if not os.path.exists(TMP_DIR_PATH):
-    os.makedirs(TMP_DIR_PATH)
+  if not os.path.exists(options.tmp_spv_path):
+    os.makedirs(options.tmp_spv_path)
 
   genCppH(
-      hFilePath=OUTPUT_DIR_PATH + "/spv.h", 
-      cppFilePath=OUTPUT_DIR_PATH + "/spv.cpp", 
-      srcDirPath=GLSL_DIR_PATH,
-      glslcPath=GLSLC_PATH,
-      tmpDirPath=TMP_DIR_PATH)
+      hFilePath=options.output_path + "/spv.h",
+      cppFilePath=options.output_path + "/spv.cpp",
+      srcDirPath=options.glsl_path,
+      glslcPath=options.glslc_path,
+      tmpDirPath=options.tmp_spv_path)
+
+if __name__ == '__main__':
+  sys.exit(main(sys.argv))
