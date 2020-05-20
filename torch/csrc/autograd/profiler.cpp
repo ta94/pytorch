@@ -352,6 +352,11 @@ void registerCUDAMethods(CUDAStubs* stubs) {
 
 ProfilerConfig::~ProfilerConfig() = default;
 
+ProfilerConfig getProfilerConfig() {
+  auto state_ptr = getProfilerTLSState();
+  return state_ptr->config();
+}
+
 bool profilerEnabled() {
   auto state_ptr = getProfilerTLSState();
   return state_ptr && state_ptr->config().state != ProfilerState::Disabled;
@@ -391,7 +396,7 @@ void enableProfiler(const ProfilerConfig& new_config) {
 }
 
 thread_event_lists disableProfiler() {
-  // all the DebugInfoBase objects are scope based and supposed to use DebugInfoGuard
+// all the DebugInfoBase objects are scope based and supposed to use DebugInfoGuard
   auto state = c10::ThreadLocalDebugInfo::_pop(c10::DebugInfoKind::PROFILER_STATE);
   auto state_ptr = static_cast<ProfilerThreadLocalState*>(state.get());
   TORCH_CHECK(state_ptr && state_ptr->config().state != ProfilerState::Disabled,
@@ -437,6 +442,43 @@ static jit::CodeTemplate event_template(R"(
   "args": {}
 })");
 
+void writeProfilerEventsToStream(std::ostream& out, const std::vector<Event*>& events) {
+  TORCH_CHECK(out, "Could not open file");
+  Event* profiler_start = nullptr;
+  for (Event* e : events) {
+    if (0 == strcmp(e->name(), "__start_profile")) {
+      profiler_start = e;
+      break;
+    }
+  }
+  TORCH_CHECK(profiler_start, "Could not find __start_profile mark");
+  std::unordered_map<at::RecordFunctionHandle, Event*> events_map;
+  out << "[\n";
+  bool first = true;
+  for (Event* evt : events) {
+    if (evt->kind() == "push") {
+      events_map[evt->handle()] = evt;
+    } else if (evt->kind() == "pop") {
+      if (!first) {
+        out << ",\n";
+      }
+      first = false;
+      auto it = events_map.find(evt->handle());
+      TORCH_CHECK(it != events_map.end(), "Unmatched pop event");
+      Event* evt_start = it->second;
+      events_map.erase(it);
+
+      jit::TemplateEnv env;
+      env.s("name", evt_start->name());
+      env.d("ts", profiler_start->cpu_elapsed_us(*evt_start));
+      env.d("dur", evt_start->cpu_elapsed_us(*evt));
+      env.d("tid", evt_start->thread_id());
+      out << event_template.format(env);
+    }
+  }
+  out << "]\n";
+}
+
 
 RecordProfile::RecordProfile(std::ostream& out)
 : out_(out) {
@@ -470,40 +512,7 @@ RecordProfile::~RecordProfile() {
 }
 
 void RecordProfile::processEvents(const std::vector<Event*>& events) {
-  TORCH_CHECK(out_, "Could not open file");
-  Event* profiler_start = nullptr;
-  for (Event* e : events) {
-    if (0 == strcmp(e->name(), "__start_profile")) {
-      profiler_start = e;
-      break;
-    }
-  }
-  TORCH_CHECK(profiler_start, "Could not find __start_profile mark");
-  std::unordered_map<at::RecordFunctionHandle, Event*> events_map;
-  out_ << "[\n";
-  bool first = true;
-  for (Event* evt : events) {
-    if (evt->kind() == "push") {
-      events_map[evt->handle()] = evt;
-    } else if (evt->kind() == "pop") {
-      if (!first) {
-        out_ << ",\n";
-      }
-      first = false;
-      auto it = events_map.find(evt->handle());
-      TORCH_CHECK(it != events_map.end(), "Unmatched pop event");
-      Event* evt_start = it->second;
-      events_map.erase(it);
-
-      jit::TemplateEnv env;
-      env.s("name", evt_start->name());
-      env.d("ts", profiler_start->cpu_elapsed_us(*evt_start));
-      env.d("dur", evt_start->cpu_elapsed_us(*evt));
-      env.d("tid", evt_start->thread_id());
-      out_ << event_template.format(env);
-    }
-  }
-  out_ << "]\n";
+  writeProfilerEventsToStream(out_, events);
 }
 
 }}}

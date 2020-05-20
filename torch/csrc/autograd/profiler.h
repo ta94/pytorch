@@ -252,7 +252,12 @@ using thread_event_lists = std::vector<std::vector<Event>>;
 // across thread boundary (e.g. at::launch tasks)
 TORCH_API void enableProfiler(const ProfilerConfig&);
 TORCH_API thread_event_lists disableProfiler();
+// Returns if the profiler is currently enabled in the current thread.
 TORCH_API bool profilerEnabled();
+// Retrieve the thread_local ProfilerConfig.
+TORCH_API ProfilerConfig getProfilerConfig();
+// Writes profiled events to a stream.
+TORCH_API void writeProfilerEventsToStream(std::ostream& out, const std::vector<Event*>& events);
 
 // Usage:
 //   {
@@ -272,6 +277,33 @@ private:
   void processEvents(const std::vector<Event*>& events);
 };
 
+// A guard that enables the profiler, taking in an optional callback to process
+// the results
+// Usage:
+// {
+//   TLSProfilerGuard g([](thread_event_lists profilerResults) {
+//     // process profilerResuls
+//   });
+//   Code to profile
+// }
+struct TORCH_API TLSProfilerGuard {
+  explicit TLSProfilerGuard(
+      const ProfilerConfig& cfg, c10::optional<std::function<void(thread_event_lists)>> resultCallback =
+          c10::nullopt)
+      : cb_(std::move(resultCallback)) {
+    enableProfiler(
+        cfg);
+  };
+  ~TLSProfilerGuard() {
+    thread_event_lists event_lists = disableProfiler();
+    if (cb_) {
+      (*cb_)(std::move(event_lists));
+    }
+  }
+
+ private:
+  c10::optional<std::function<void(thread_event_lists)>> cb_;
+};
 
 } // namespace profiler
 }} // namespace torch::autograd
