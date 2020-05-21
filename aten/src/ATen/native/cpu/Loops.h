@@ -31,6 +31,7 @@
 #include <ATen/detail/FunctionTraits.h>
 #include <ATen/native/cpu/IsContiguous.h>
 #include <ATen/native/TensorIterator.h>
+#include <ATen/native/TensorIteratorDynamicCasting.h>
 #include <ATen/cpu/vec256/vec256.h>
 
 #ifndef _MSC_VER
@@ -189,6 +190,8 @@ void cpu_kernel(TensorIterator& iter, func_t&& op) {
   // this could be extended to work with void return types
   TORCH_INTERNAL_ASSERT(iter.ninputs() == traits::arity);
   TORCH_INTERNAL_ASSERT(iter.noutputs() == 1);
+  // dynamic casting not currently supported on CPU
+  TORCH_INTERNAL_ASSERT(!needs_dynamic_casting<func_t>::check(iter));
 
   iter.for_each([&](char** data, const int64_t* strides, int64_t n) {
     if (is_contiguous<traits>(strides)) {
@@ -209,6 +212,8 @@ void cpu_kernel_vec(TensorIterator& iter, func_t&& op, vec_func_t&& vop) {
   // this could be extended to work with void return types
   TORCH_INTERNAL_ASSERT(iter.ninputs() == traits::arity);
   TORCH_INTERNAL_ASSERT(iter.noutputs() == 1);
+  // dynamic casting not currently supported on CPU
+  TORCH_INTERNAL_ASSERT(!needs_dynamic_casting<func_t>::check(iter));
 
   iter.for_each([&](char** data, const int64_t* strides, int64_t n) {
     if (is_contiguous<traits>(strides)) {
@@ -233,6 +238,8 @@ void cpu_serial_kernel(TensorIterator& iter, func_t&& op, const Range& range) {
   constexpr bool result_void = std::is_void<typename traits::result_type>::value;
   TORCH_INTERNAL_ASSERT(iter.ninputs() == traits::arity &&
                         ((result_void && iter.noutputs() == 0) || (!result_void && iter.noutputs() == 1)));
+  // dynamic casting not currently supported on CPU
+  TORCH_INTERNAL_ASSERT(!needs_dynamic_casting<func_t>::check(iter));
 
   iter.serial_for_each([&](char** data, const int64_t* strides, int64_t n) {
     if (is_contiguous<traits>(strides)) {
@@ -258,6 +265,8 @@ void cpu_serial_kernel_vec(TensorIterator& iter, func_t&& op, vec_func_t&& vop, 
   // this could be extended to work with void return types
   TORCH_INTERNAL_ASSERT(iter.ninputs() == traits::arity);
   TORCH_INTERNAL_ASSERT(iter.noutputs() == 1);
+  // dynamic casting not currently supported on CPU
+  TORCH_INTERNAL_ASSERT(!needs_dynamic_casting<func_t>::check(iter));
 
   iter.serial_for_each([&](char** data, const int64_t* strides, int64_t n) {
     if (is_contiguous<traits>(strides)) {
