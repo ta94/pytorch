@@ -6,7 +6,6 @@
 #include <ATen/native/UpSample.h>
 #include <ATen/native/utils/ParamUtils.h>
 #include <ATen/native/vulkan/Vulkan.h>
-#include <ATen/native/vulkan/VulkanCommon.h>
 #include <ATen/native/vulkan/VulkanOps.h>
 
 namespace at {

@@ -1,11 +1,13 @@
-#include <c10/util/Exception.h>
-#include <c10/util/Optional.h>
 #include <iostream>
 #include <limits>
 #include <vector>
 
+#include <c10/util/Exception.h>
+#include <c10/util/Optional.h>
+
 #include <ATen/native/vulkan/Vulkan.h>
 #include <ATen/native/vulkan/VulkanCommon.h>
+#include <ATen/native/vulkan/VulkanConvolution.h>
 #include <ATen/native/vulkan/VulkanOps.h>
 
 namespace at {

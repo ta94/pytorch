@@ -336,7 +336,7 @@ void VBuffer::copy_from_device_to_host(void* outputData, int64_t size) {
   mm.flushWriteToHost();
 }
 
-void VBuffer::copy_from_host_to_device(void* data, int64_t size) {
+void VBuffer::copy_from_host_to_device(const void* data, int64_t size) {
   auto mm = map();
   TORCH_INTERNAL_ASSERT(mm.ptr(), "Vulkan: Failed to map Vulkan Buffer memory");
   ::memcpy(mm.ptr(), data, size);
@@ -1063,10 +1063,10 @@ class VulkanTensor::Impl {
   }
 
   ImageSizes imageSizes_W_H_NC4() {
-    auto d = dim();
     TORCH_INTERNAL_ASSERT(
-        d <= 4,
+        can_be_image(),
         "Vulkan: Only Tensors with dim <= 4 can be represented as Vulkam Image");
+    auto d = dim();
     uint32_t wd = 1;
     uint32_t hd = 1;
     uint32_t dd = 1;
@@ -1131,7 +1131,8 @@ class VulkanTensor::Impl {
     if (!has_storage()) {
       allocate_storage();
     }
-    buffer_->copy_from_host_to_device((void*)inputData, sizeof(float) * numel_);
+    buffer_->copy_from_host_to_device(
+        (const void*)inputData, sizeof(float) * numel_);
   }
 
   void copy_data_to_host(float* outputData) const {

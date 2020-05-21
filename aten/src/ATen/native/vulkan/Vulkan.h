@@ -120,6 +120,14 @@ class VulkanTensor final {
   bool can_be_image() const;
   bool has_image() const;
 
+  // if imageSizes argument is not specified:
+  // Allocates VImage of sizes{W,H,NC4} and fills it from tensor VBuffer if it
+  // exists, see comment for VulkanTensor.
+  //
+  // if imageSizes argument is specified:
+  // Only allocates VImage of specified sizes, that will be returned on
+  // subsequent image() calls. Can be used when user wants to store tensor image
+  // not in default{W, H, NC4} format (For performance or other reasons).
   VImage* image(c10::optional<ImageSizes> imageSizes = c10::nullopt);
   const VImage* image(
       c10::optional<ImageSizes> imageSizes = c10::nullopt) const;
@@ -233,7 +241,7 @@ class VBuffer final {
   }
 
   void copy_from_device_to_host(void* outputData, int64_t size);
-  void copy_from_host_to_device(void* data, int64_t size);
+  void copy_from_host_to_device(const void* data, int64_t size);
   void set_zeros();
 
   VkDescriptorBufferInfo makeDescriptorBufferInfo() const;
@@ -311,7 +319,8 @@ class VImage final {
   }
 
   inline VkDeviceSize capacityBytes() const {
-    return sizeof(float) * imageSize_[0] * imageSize_[1] * imageSize_[2] * 4;
+    // Every VImage pixel(texel) contains 4 float elements
+    return sizeof(float) * 4 * imageSize_[0] * imageSize_[1] * imageSize_[2];
   }
 
   ImageSize sizes() const {
@@ -331,6 +340,9 @@ class VImage final {
   VkDeviceMemory imageMemory_;
   VkImageView imageView_;
   VkSampler sampler_;
+  // Holds current image layout that will be used in
+  // addImageMemoryBarrier as the previous layout. Need to be mutable to
+  // use addImageMemoryBarrier() for const VImage.
   mutable VkImageLayout imageLayout_;
 };
 
@@ -350,13 +362,6 @@ void createDescriptorSetLayout(
     const VkDescriptorSetLayoutBinding* bindings,
     uint32_t bindingCount,
     VkDescriptorSetLayout* setLayout);
-
-void createDescriptorPool(
-    VkDevice device,
-    const VkDescriptorPoolSize* poolSizes,
-    uint32_t poolSizeCount,
-    uint32_t maxSets,
-    VkDescriptorPool* descriptorPool);
 
 void allocateDescriptorSet(
     VkDevice device,
@@ -385,10 +390,7 @@ class ComputeUnit final {
       const char* glslSrc,
       const VkDescriptorSetLayout& descrSetLayout,
       WorkGroupSize& workGroupSize) {
-    createComputePipelineCompile(
-        std::string{glslSrc, std::strlen(glslSrc)},
-        descrSetLayout,
-        workGroupSize);
+    createComputePipelineCompile(glslSrc, descrSetLayout, workGroupSize);
   }
 #else
   ComputeUnit(

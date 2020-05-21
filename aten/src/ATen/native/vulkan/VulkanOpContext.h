@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ATen/Tensor.h>
-#include <ATen/native/vulkan/VulkanCommon.h>
+#include <ATen/native/vulkan/VulkanConvolution.h>
 
 namespace at {
 namespace native {
