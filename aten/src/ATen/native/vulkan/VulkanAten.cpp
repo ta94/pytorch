@@ -68,9 +68,12 @@ at::Tensor& copy_from_vulkan_(at::Tensor& self, const at::Tensor& src) {
       self.scalar_type() == ScalarType::Float,
       "copy_from_vulkan is implemented only for float dtype output, got:",
       self.scalar_type());
+  TORCH_INTERNAL_ASSERT(
+      self.is_contiguous(),
+      "copy_from_vulkan is implemented only for contiguous output tensor");
 
   VulkanTensor& vtensor = vtensor_from_vulkan(src);
-  vtensor.copy_data_to_host(self.template data_ptr<float>());
+  vtensor.copy_data_to_host(self.data_ptr<float>());
   return self;
 }
 
@@ -90,7 +93,7 @@ at::Tensor& copy_to_vulkan_(at::Tensor& self, const at::Tensor& src) {
 
   auto cpu_tensor_contiguous = src.contiguous();
   VulkanTensor& vtensor = vtensor_from_vulkan(self);
-  vtensor.set_data_from_host(cpu_tensor_contiguous.template data_ptr<float>());
+  vtensor.set_data_from_host(cpu_tensor_contiguous.data_ptr<float>());
   return self;
 }
 
@@ -167,10 +170,9 @@ at::Tensor vulkan_convolution(
   vulkan::detail::conv2d(
       voutput,
       vinput,
-      weight.template data_ptr<float>(),
-      bias.defined()
-          ? c10::make_optional<float*>(bias.template data_ptr<float>())
-          : c10::nullopt,
+      weight.data_ptr<float>(),
+      bias.defined() ? c10::make_optional<float*>(bias.data_ptr<float>())
+                     : c10::nullopt,
       params);
   return new_with_vtensor_vulkan(std::move(voutput), input.options());
 }
@@ -190,7 +192,7 @@ at::Tensor vulkan_convolution_prepack_weights(const at::Tensor& weight) {
   voutput.allocate_storage();
 
   vulkan::detail::conv2d_prepack_weights(
-      voutput, weight.template data_ptr<float>(), OC, C, KH, KW);
+      voutput, weight.data_ptr<float>(), OC, C, KH, KW);
   return new_with_vtensor_vulkan(
       std::move(voutput), at::device(at::kVulkan).dtype(at::kFloat));
 }
@@ -229,8 +231,7 @@ at::Tensor vulkan_convolution_prepacked(
         voutput,
         vinput,
         vweight,
-        hasBias ? c10::make_optional((*bias).template data_ptr<float>())
-                : c10::nullopt,
+        hasBias ? c10::make_optional((*bias).data_ptr<float>()) : c10::nullopt,
         params);
   }
   return new_with_vtensor_vulkan(std::move(voutput), input.options());
