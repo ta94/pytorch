@@ -1021,6 +1021,8 @@ void copy_image_to_buffer(
 class VulkanTensor::Impl {
  public:
   Impl(std::vector<int64_t> sizes) : sizes_(std::move(sizes)) {
+    TORCH_CHECK(
+        initVulkanContextOnce(), "Vulkan Failed to create Vulkan Context");
     numel_ = std::accumulate(
         std::begin(sizes_), std::end(sizes_), 1, std::multiplies<int64_t>());
   }
@@ -1214,10 +1216,7 @@ const VImage* VulkanTensor::image(c10::optional<ImageSizes> imageSizes) const {
 }
 
 VulkanTensor::VulkanTensor(std::vector<int64_t> sizes)
-    : impl_(std::make_shared<Impl>(std::move(sizes))) {
-  TORCH_CHECK(
-      initVulkanContextOnce(), "Vulkan Failed to create Vulkan Context");
-}
+    : impl_(std::make_shared<Impl>(std::move(sizes))) {}
 
 std::ostream& operator<<(std::ostream& s, const ImageSize& imageSize) {
   s << "ImageSize{" << imageSize[0] << ", " << imageSize[1] << ", "
