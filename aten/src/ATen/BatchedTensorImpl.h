@@ -78,6 +78,7 @@ struct TORCH_API BatchedTensorImpl : public c10::TensorImpl {
  private:
   Tensor value_;
 
+  // NOTE: [BatchDims sorted by level invariant]
   // There is an invariant that the BatchDims must be stored in increasing `level`
   // order. That is, for i < j, bdims_[i].level must be less than bdims_[j].level.
   BatchDims bdims_;
