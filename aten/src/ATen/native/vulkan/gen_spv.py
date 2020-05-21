@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import array
 import os
 import sys
 import subprocess
@@ -39,9 +40,8 @@ def genCppH(hFilePath, cppFilePath, srcDirPath, glslcPath, tmpDirPath):
         subprocess.check_call(cmd)
         spvPaths.append(spvPath)
 
-    print("hFilePath:{}".format(hFilePath))
-    print("cppFilePath:{}".format(cppFilePath))
     h = "#pragma once\n"
+    h += "#include <stdint.h>\n"
     nsbegin = "\nnamespace at { namespace native { namespace vulkan { \n"
     nsend = "\n} } } //namespace at::native::vulkan\n"
 
@@ -53,23 +53,18 @@ def genCppH(hFilePath, cppFilePath, srcDirPath, glslcPath, tmpDirPath):
     for spvPath in spvPaths:
         name = getName(spvPath)
         name_len = name + "_len"
-        h += "extern const unsigned char {}[];\n".format(name)
-        h += "extern unsigned int {};\n".format(name_len)
+        h += "extern const uint32_t {}[];\n".format(name)
+        h += "extern const uint32_t {};\n".format(name_len)
 
-        cpp += "const unsigned char " + name + "[] = {\n"
+        cpp += "const uint32_t " + name + "[] = {\n"
         sizeBytes = 0
+        print("spvPath:{}".format(spvPath))
         with open(spvPath, 'rb') as f:
-            line = ""
-            while True:
-                byte = f.read(1)
-                if not byte:
-                    break
-                int_value = ord(byte)
-                s = "0x{0:02X},".format(int_value)
-                cpp += s + "\n"
-                sizeBytes += 1
+            for word in array.array('I', f.read()):
+                cpp += "{},\n".format(word)
+                sizeBytes += 4
             cpp += "};\n"
-        cpp += "unsigned int {} = {};\n".format(name_len, sizeBytes)
+        cpp += "const uint32_t {} = {};\n".format(name_len, sizeBytes)
 
     cpp += nsend
     h += nsend

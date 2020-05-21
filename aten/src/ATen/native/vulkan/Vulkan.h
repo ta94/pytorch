@@ -392,16 +392,12 @@ class ComputeUnit final {
   }
 #else
   ComputeUnit(
-      const unsigned char* spvCode,
+      const uint32_t* spvCode,
       const unsigned int spvCodeSize,
       const VkDescriptorSetLayout& descrSetLayout,
       WorkGroupSize& workGroupSize) {
     const auto codeSize = spvCodeSize;
-    createComputePipeline(
-        reinterpret_cast<const uint32_t*>(spvCode),
-        codeSize,
-        descrSetLayout,
-        workGroupSize);
+    createComputePipeline(spvCode, codeSize, descrSetLayout, workGroupSize);
   }
 #endif
 
